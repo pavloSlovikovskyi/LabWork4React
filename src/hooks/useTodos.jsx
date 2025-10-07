@@ -4,50 +4,72 @@ const API_URL = 'https://dummyjson.com/todos';
 
 export default function useTodos() {
   const [todos, setTodos] = useState([]);
+  const [displayTodos, setDisplayTodos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [searchTerm, setSearchTerm] = useState('');
+
   useEffect(() => {
     setIsLoading(true);
-    fetch(`${API_URL}?limit=10`)
+    fetch(API_URL)
       .then(res => res.json())
-      .then(data => setTodos(data.todos))
-      .catch(err => setError(err.message || 'Error'))
+      .then(data => {
+        setTodos(data.todos);
+      })
+      .catch(err => setError(err.message))
       .finally(() => setIsLoading(false));
   }, []);
 
+  useEffect(() => {
+    const filtered = todos.filter(t => t.todo.toLowerCase().includes(searchTerm.toLowerCase()));
+    const startIdx = (currentPage - 1) * limit;
+    const paginated = filtered.slice(startIdx, startIdx + limit);
+    setDisplayTodos(paginated);
+  }, [todos, searchTerm, currentPage, limit]);
+
+  const goToNextPage = () => {
+    if (currentPage * limit < todos.filter(t => t.todo.toLowerCase().includes(searchTerm.toLowerCase())).length) {
+      setCurrentPage(prev => prev + 1);
+    }
+  };
+  const goToPrevPage = () => {
+    if (currentPage > 1) setCurrentPage(prev => prev - 1);
+  };
+
+  const editTodoTitle = (id, newTitle) => {
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, todo: newTitle } : t));
+  };
+
   const deleteTodo = (id) => {
-    setIsLoading(true);
-    fetch(`${API_URL}/${id}`, { method: 'DELETE' })
-      .then(() => setTodos(todos => todos.filter(todo => todo.id !== id)))
-      .catch(err => setError(err.message || 'Error'))
-      .finally(() => setIsLoading(false));
+    setTodos(prev => prev.filter(t => t.id !== id));
   };
 
   const toggleTodo = (id) => {
-    const todo = todos.find(t => t.id === id);
-    if (!todo) return;
-    setIsLoading(true);
-    fetch(`${API_URL}/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ completed: !todo.completed }),
-    })
-      .then(res => res.json())
-      .then(updated => setTodos(todos => todos.map(t => t.id === id ? { ...t, completed: updated.completed } : t)))
-      .catch(err => setError(err.message || 'Error'))
-      .finally(() => setIsLoading(false));
+    setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
   };
 
   const addTodo = (text) => {
-    const newTodo = {
-      id: Date.now(),
-      todo: text,
-      completed: false,
-      userId: 1,
-    };
-    setTodos(todos => [...todos, newTodo]);
+    const newTodo = { id: Date.now(), todo: text, completed: false, userId: 1 };
+    setTodos(prev => [...prev, newTodo]);
   };
 
-  return { todos, isLoading, error, deleteTodo, toggleTodo, addTodo };
+  return {
+    todos: displayTodos,
+    isLoading,
+    error,
+    currentPage,
+    totalTodos: todos.length,
+    goToNextPage,
+    goToPrevPage,
+    setLimit,
+    setSearchTerm,
+    searchTerm,
+    editTodoTitle,
+    deleteTodo,
+    toggleTodo,
+    addTodo,
+  };
 }
