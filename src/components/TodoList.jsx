@@ -3,7 +3,7 @@ import useTodos from '../hooks/useTodos';
 import AddToDoForm from './AddToDoForm';
 import ToDoListItem from './ToDoListItem';
 
-const ToDoList = () => {
+const TodoList = () => {
   const {
     todos,
     isLoading,
@@ -12,7 +12,6 @@ const ToDoList = () => {
     toggleTodo,
     addTodo,
     currentPage,
-    limitPerPage,
     totalTodos,
     goToPrevPage,
     goToNextPage,
@@ -71,12 +70,12 @@ const ToDoList = () => {
         </span>
         <button
           onClick={goToNextPage}
-          disabled={currentPage * limitPerPage >= totalTodos}
-          className={`px-3 py-1 rounded ${currentPage * limitPerPage >= totalTodos ? 'bg-gray-700 text-gray-400' : 'bg-white text-black'}`}
+          disabled={currentPage * 10 >= totalTodos}
+          className={`px-3 py-1 rounded ${currentPage * 10 >= totalTodos ? 'bg-gray-700 text-gray-400' : 'bg-white text-black'}`}
         >
           Next
         </button>
-        <select value={limitPerPage} onChange={handleLimitChange} className="ml-3 bg-black text-white border border-gray-700 rounded px-2">
+        <select onChange={handleLimitChange} className="ml-3 bg-black text-white border border-gray-700 rounded px-2">
           {[5, 10, 20].map(n => (
             <option key={n} value={n}>{n} per page</option>
           ))}
@@ -144,4 +143,4 @@ const ToDoList = () => {
   );
 };
 
-export default ToDoList;
+export default TodoList;
