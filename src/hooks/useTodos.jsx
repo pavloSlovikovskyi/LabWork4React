@@ -34,7 +34,8 @@ export default function useTodos() {
     if (currentPage * limit < todos.filter(t => t.todo.toLowerCase().includes(searchTerm.toLowerCase())).length) {
       setCurrentPage(prev => prev + 1);
     }
-  };
+  }; // ВИПРАВЛЕНО: додано закриваючу дужку
+
   const goToPrevPage = () => {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
   };
