@@ -1,16 +1,61 @@
-# React + Vite
+# Diagram
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+```mermaid
+graph TD;
+    App["App
+    Root component
+    Renders layout structure
+    Contains ToDoList"] 
 
-Currently, two official plugins are available:
+    UseTodos["useTodos (custom hook)
+    State: todos[], currentPage, limit, searchTerm, error, isLoading
+    Logic: fetch all todos, CRUD, search, pagination
+    Exposes: todos (filtered/paginated), add/delete/toggle/edit/goToNextPage/goToPrevPage/setLimit/setSearchTerm"]
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+    ToDoList["ToDoList
+    Receives all data/callbacks via useTodos
+    Manages edit UI (local edit state per item)
+    Renders search input, pagination controls, todos"] 
 
-## React Compiler
+    AddTodoForm["AddTodoForm
+    Props: onAddTodo (callback)
+    State: newTodoText
+    Calls: addTodo"] 
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+    ToDoListItem["ToDoListItem
+    Props: todo object, onToggleComplete, onRemoveTodo, onEditTodo
+    "] 
 
-## Expanding the ESLint configuration
+    %% Root level
+    App --> ToDoList
+    ToDoList --- UseTodos
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+    %% ToDoList children
+    ToDoList --> AddTodoForm
+    ToDoList --> ToDoListItem
+
+    %% AddTodoForm - data flow
+    AddTodoForm -.->|"onAddTodo(newTodoText)"| UseTodos
+
+    %% ToDoListItem - data flow
+    ToDoListItem -.->|"onToggleComplete()"| UseTodos
+    ToDoListItem -.->|"onRemoveTodo(todo.id)"| UseTodos
+    ToDoListItem -.->|"onEditTodo(todo.id, newTitle)"| UseTodos
+
+    %% UI controls
+    ToDoList -.->|"searchTerm, setSearchTerm"| UseTodos
+    ToDoList -.->|"pagination controls:
+      goToNextPage, goToPrevPage, setLimit"| UseTodos
+```
+
+# Explanation
+
+useTodos (custom hook): інкапсулює весь стан і логіку додатку — зберігає масив задач todos, параметри пошуку, пагінації, індикатори завантаження та помилки; реалізує отримання даних з API, фільтрацію, пагінацію, додавання, видалення, редагування та перемикання виконання задач; повертає відфільтрований і пагінований масив задач, а також усі функції для керування даними.
+
+ToDoList: не містить власного стану задач, отримує всі дані та callback-функції з кастомного хуку useTodos; відповідає за UI — поле пошуку, контролі пагінації, список задач, локальний стан для редагування задач; передає callback-и дочірнім компонентам для взаємодії з хуком.
+
+AddTodoForm: керує полем введення newTodoText і передає нову справу у useTodos через onAddTodo.
+
+ToDoListItem: керує локальною подією кліку для завершення справи, видалення та редагування; отримує дані задачі та callback-и для дій через пропси; реалізує UI для чекбоксу, кнопок редагування/збереження/видалення, інпуту для редагування.
+
+App: не має стану, служить лише обгорткою і рендерить ToDoList.
