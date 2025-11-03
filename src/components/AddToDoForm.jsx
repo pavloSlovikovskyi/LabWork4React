@@ -32,4 +32,5 @@ function AddToDoForm({ onAddTodo }) {
   );
 }
 
-export default AddToDoForm;
+// мемоізація компонента для запобігання зайвих ре-рендерів
+export default React.memo(AddToDoForm);

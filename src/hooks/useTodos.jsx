@@ -1,10 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 
 const API_URL = 'https://dummyjson.com/todos';
 
 export default function useTodos() {
   const [todos, setTodos] = useState([]);
-  const [displayTodos, setDisplayTodos] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
 
@@ -23,39 +22,44 @@ export default function useTodos() {
       .finally(() => setIsLoading(false));
   }, []);
 
-  useEffect(() => {
-    const filtered = todos.filter(t => t.todo.toLowerCase().includes(searchTerm.toLowerCase()));
-    const startIdx = (currentPage - 1) * limit;
-    const paginated = filtered.slice(startIdx, startIdx + limit);
-    setDisplayTodos(paginated);
-  }, [todos, searchTerm, currentPage, limit]);
+  // мемоізація відфільтрованих todos
+  const filteredTodos = useMemo(() => {
+    return todos.filter(t => t.todo.toLowerCase().includes(searchTerm.toLowerCase()));
+  }, [todos, searchTerm]);
 
-  const goToNextPage = () => {
-    if (currentPage * limit < todos.filter(t => t.todo.toLowerCase().includes(searchTerm.toLowerCase())).length) {
+  // мемоізація пагінованих todos
+  const displayTodos = useMemo(() => {
+    const startIdx = (currentPage - 1) * limit;
+    return filteredTodos.slice(startIdx, startIdx + limit);
+  }, [filteredTodos, currentPage, limit]);
+
+  // мемоізація функцій для стабільних референсій
+  const goToNextPage = useCallback(() => {
+    if (currentPage * limit < filteredTodos.length) {
       setCurrentPage(prev => prev + 1);
     }
-  }; 
+  }, [currentPage, limit, filteredTodos.length]);
 
-  const goToPrevPage = () => {
+  const goToPrevPage = useCallback(() => {
     if (currentPage > 1) setCurrentPage(prev => prev - 1);
-  };
+  }, [currentPage]);
 
-  const editTodoTitle = (id, newTitle) => {
+  const editTodoTitle = useCallback((id, newTitle) => {
     setTodos(prev => prev.map(t => t.id === id ? { ...t, todo: newTitle } : t));
-  };
+  }, []);
 
-  const deleteTodo = (id) => {
+  const deleteTodo = useCallback((id) => {
     setTodos(prev => prev.filter(t => t.id !== id));
-  };
+  }, []);
 
-  const toggleTodo = (id) => {
+  const toggleTodo = useCallback((id) => {
     setTodos(prev => prev.map(t => t.id === id ? { ...t, completed: !t.completed } : t));
-  };
+  }, []);
 
-  const addTodo = (text) => {
+  const addTodo = useCallback((text) => {
     const newTodo = { id: Date.now(), todo: text, completed: false, userId: 1 };
     setTodos(prev => [...prev, newTodo]);
-  };
+  }, []);
 
   return {
     todos: displayTodos,

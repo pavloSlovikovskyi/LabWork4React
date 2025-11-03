@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import useTodos from '../hooks/useTodos';
 import AddToDoForm from './AddToDoForm';
 import ToDoListItem from './ToDoListItem';
@@ -23,27 +23,39 @@ const TodoList = () => {
 
   const [editId, setEditId] = useState(null);
   const [editValue, setEditValue] = useState('');
-
-  const handleSearchChange = (e) => {
+//колбеки
+  const handleSearchChange = useCallback((e) => {
     setSearchTerm(e.target.value);
-  };
+  }, [setSearchTerm]);
 
-  const handleLimitChange = (e) => {
+  const handleLimitChange = useCallback((e) => {
     setLimit(Number(e.target.value));
-  };
+  }, [setLimit]);
 
-  const startEditing = (id, value) => {
+  const startEditing = useCallback((id, value) => {
     setEditId(id);
     setEditValue(value);
-  };
+  }, []);
 
-  const saveEdit = (id) => {
+  const saveEdit = useCallback((id) => {
     if (editValue.trim()) {
       editTodoTitle(id, editValue);
     }
     setEditId(null);
     setEditValue('');
-  };
+  }, [editValue, editTodoTitle]);
+
+  const handleEditValueChange = useCallback((e) => {
+    setEditValue(e.target.value);
+  }, []);
+
+  const maxPage = useMemo(() => {
+    return Math.ceil(totalTodos / 10);
+  }, [totalTodos]);
+
+  const isLastPage = useMemo(() => {
+    return currentPage >= maxPage;
+  }, [currentPage, maxPage]);
 
   return (
     <div className="w-full max-w-md mx-auto">
@@ -70,8 +82,8 @@ const TodoList = () => {
         </span>
         <button
           onClick={goToNextPage}
-          disabled={currentPage * 10 >= totalTodos}
-          className={`px-3 py-1 rounded ${currentPage * 10 >= totalTodos ? 'bg-gray-700 text-gray-400' : 'bg-white text-black'}`}
+          disabled={isLastPage}
+          className={`px-3 py-1 rounded ${isLastPage ? 'bg-gray-700 text-gray-400' : 'bg-white text-black'}`}
         >
           Next
         </button>
@@ -86,7 +98,7 @@ const TodoList = () => {
       {error && <div className="text-red-500 text-center mb-2">{error}</div>}
 
       <ul className="space-y-2">
-        {todos.map(todo =>
+        {todos.map(todo => (
           <li key={todo.id} className="flex items-center justify-between p-3 bg-black border border-gray-700 rounded shadow-sm">
             <div className="flex items-center space-x-3">
               <input
@@ -99,9 +111,9 @@ const TodoList = () => {
                 <input
                   type="text"
                   value={editValue}
-                  onChange={e => setEditValue(e.target.value)}
+                  onChange={handleEditValueChange}
                   onBlur={() => saveEdit(todo.id)}
-                  onKeyDown={e => {
+                  onKeyDown={(e) => {
                     if (e.key === 'Enter') saveEdit(todo.id);
                   }}
                   className="bg-gray-900 text-white px-2 rounded focus:outline-none"
@@ -137,7 +149,7 @@ const TodoList = () => {
               </button>
             </div>
           </li>
-        )}
+        ))}
       </ul>
     </div>
   );
